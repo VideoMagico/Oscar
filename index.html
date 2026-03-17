@@ -168,7 +168,33 @@ video.play();
 });
 
 </script>
+<script>
 
+// pasar automáticamente al siguiente cuadro
+const inputs = document.querySelectorAll(".pin input");
+
+inputs.forEach((input, index) => {
+
+  input.addEventListener("input", () => {
+    if (input.value.length === 1 && index < inputs.length - 1) {
+      inputs[index + 1].focus();
+    }
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && input.value === "" && index > 0) {
+      inputs[index - 1].focus();
+    }
+  });
+
+});
+
+// foco automático al cargar
+window.onload = () => {
+  inputs[0].focus();
+};
+
+</script>
 <script data-goatcounter="https://fotomagica.goatcounter.com/count"
 async src="//gc.zgo.at/count.js"></script>
 
