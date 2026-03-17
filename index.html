@@ -3,198 +3,107 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Acceso privado</title>
+<title>Acceso</title>
 
 <style>
-
 body{
 margin:0;
-background:#000;
-color:white;
-font-family:Arial;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+background:black;
 overflow:hidden;
 }
 
-/* pantalla acceso */
-
-#login{
-text-align:center;
-}
-
-h1{
-font-weight:300;
-letter-spacing:3px;
-margin-bottom:40px;
-}
-
-.pin{
-display:flex;
-gap:10px;
-justify-content:center;
-}
-
-.pin input{
-width:55px;
-height:65px;
-font-size:2rem;
-text-align:center;
-border:none;
-border-radius:6px;
-background:#111;
-color:white;
-}
-
-button{
-margin-top:35px;
-padding:12px 30px;
-background:#222;
-color:white;
-border:none;
-border-radius:5px;
-font-size:1rem;
-}
-
-#error{
-margin-top:20px;
-opacity:0.7;
-}
-
-/* video */
-
+/* video oculto */
 #videoContainer{
 display:none;
-position:absolute;
+position:fixed;
 top:0;
 left:0;
 width:100%;
 height:100%;
 justify-content:center;
 align-items:center;
+background:black;
 }
 
 video{
 max-width:100%;
 max-height:100%;
-object-fit:contain;
 }
-
-.mensaje{
-position:absolute;
-bottom:40px;
-letter-spacing:2px;
-font-size:1.1rem;
-opacity:0.8;
-}
-
-.sonido{
-position:absolute;
-top:30px;
-font-size:0.8rem;
-opacity:0.6;
-}
-
 </style>
 </head>
 
 <body>
 
-<div id="login">
-
-<h1>ACCESO PRIVADO</h1>
-
-<div class="pin">
-<input maxlength="1" id="p1">
-<input maxlength="1" id="p2">
-<input maxlength="1" id="p3">
-<input maxlength="1" id="p4">
-</div>
-
-<button onclick="verificar()">Entrar</button>
-
-<div id="error"></div>
-
-</div>
+<canvas id="canvas"></canvas>
 
 <div id="videoContainer">
-
 <video autoplay muted loop playsinline id="video">
 <source src="Oscar.mp4" type="video/mp4">
 </video>
-
-<div class="mensaje">
-UN MOMENTO QUE VIVE PARA SIEMPRE
-</div>
-
-<div class="sonido">
-Toca la pantalla para activar sonido
-</div>
-
 </div>
 
 <script>
 
-const codigoCorrecto="1234";
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-function verificar(){
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let codigo=
-document.getElementById("p1").value+
-document.getElementById("p2").value+
-document.getElementById("p3").value+
-document.getElementById("p4").value;
+let puntos = [];
 
-if(codigo===codigoCorrecto){
+function start(e){
+puntos = [];
+}
 
-document.getElementById("login").style.display="none";
+function move(e){
+let x = e.touches ? e.touches[0].clientX : e.clientX;
+let y = e.touches ? e.touches[0].clientY : e.clientY;
+
+puntos.push({x,y});
+}
+
+function end(){
+if(validarR(puntos)){
+desbloquear();
+}
+}
+
+// detectar gesto tipo "R" (simplificado)
+function validarR(p){
+
+if(p.length < 20) return false;
+
+// inicio arriba
+let inicio = p[0];
+let medio = p[Math.floor(p.length/2)];
+let fin = p[p.length-1];
+
+// condición básica:
+// baja → sube/curva → baja en diagonal
+let baja = fin.y > inicio.y;
+let curva = medio.x > inicio.x;
+
+return baja && curva;
+}
+
+function desbloquear(){
+document.getElementById("canvas").style.display="none";
 document.getElementById("videoContainer").style.display="flex";
-
-}else{
-
-document.getElementById("error").innerText="Código incorrecto";
-
 }
 
-}
+// eventos táctiles
+canvas.addEventListener("touchstart", start);
+canvas.addEventListener("touchmove", move);
+canvas.addEventListener("touchend", end);
 
-const video=document.getElementById("video");
-
-document.body.addEventListener("click",function(){
-video.muted=false;
-video.play();
-});
-
-</script>
-<script>
-
-// pasar automáticamente al siguiente cuadro
-const inputs = document.querySelectorAll(".pin input");
-
-inputs.forEach((input, index) => {
-
-  input.addEventListener("input", () => {
-    if (input.value.length === 1 && index < inputs.length - 1) {
-      inputs[index + 1].focus();
-    }
-  });
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Backspace" && input.value === "" && index > 0) {
-      inputs[index - 1].focus();
-    }
-  });
-
-});
-
-// foco automático al cargar
-window.onload = () => {
-  inputs[0].focus();
-};
+// mouse (PC)
+canvas.addEventListener("mousedown", start);
+canvas.addEventListener("mousemove", move);
+canvas.addEventListener("mouseup", end);
 
 </script>
+
 <script data-goatcounter="https://fotomagica.goatcounter.com/count"
 async src="//gc.zgo.at/count.js"></script>
 
