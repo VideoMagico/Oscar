@@ -72,26 +72,49 @@ desbloquear();
 // detectar gesto tipo "R" (simplificado)
 function validarR(p){
 
-if(p.length < 20) return false;
+if(p.length < 40) return false;
 
-// inicio arriba
+// calcular cambios de dirección
+let cambiosDireccion = 0;
+
+for(let i = 2; i < p.length; i++){
+  let dx1 = p[i-1].x - p[i-2].x;
+  let dy1 = p[i-1].y - p[i-2].y;
+  let dx2 = p[i].x - p[i-1].x;
+  let dy2 = p[i].y - p[i-1].y;
+
+  let cambio = Math.abs(dx1 - dx2) + Math.abs(dy1 - dy2);
+
+  if(cambio > 15){
+    cambiosDireccion++;
+  }
+}
+
+// desplazamientos totales
 let inicio = p[0];
-let medio = p[Math.floor(p.length/2)];
-let fin = p[p.length-1];
+let fin = p[p.length - 1];
 
-// condición básica:
-// baja → sube/curva → baja en diagonal
-let baja = fin.y > inicio.y;
-let curva = medio.x > inicio.x;
+let desplazamientoY = fin.y - inicio.y;
+let desplazamientoX = fin.x - inicio.x;
 
-return baja && curva;
+// condiciones más estrictas
+let baja = desplazamientoY > 100;      // tiene que bajar bastante
+let derecha = desplazamientoX > 50;    // tiene que ir hacia la derecha
+let forma = cambiosDireccion > 10;     // debe tener curva
+
+return baja && derecha && forma;
 }
 
 function desbloquear(){
 document.getElementById("canvas").style.display="none";
 document.getElementById("videoContainer").style.display="flex";
 }
+const video = document.getElementById("video");
 
+video.onended = function(){
+  document.body.style.background = "black";
+  video.style.display = "none";
+};
 // eventos táctiles
 canvas.addEventListener("touchstart", start);
 canvas.addEventListener("touchmove", move);
