@@ -28,6 +28,7 @@ background:black;
 video{
 max-width:100%;
 max-height:100%;
+object-fit:contain;
 }
 </style>
 </head>
@@ -37,7 +38,7 @@ max-height:100%;
 <canvas id="canvas"></canvas>
 
 <div id="videoContainer">
-<video autoplay muted loop playsinline id="video">
+<video autoplay muted playsinline id="video">
 <source src="Oscar.mp4" type="video/mp4">
 </video>
 </div>
@@ -51,79 +52,93 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let puntos = [];
+let dibujando = false;
+let timeoutReset;
 
+// iniciar trazo
 function start(e){
-puntos = [];
+  dibujando = true;
+  puntos = [];
+  clearTimeout(timeoutReset);
 }
 
+// mover
 function move(e){
-let x = e.touches ? e.touches[0].clientX : e.clientX;
-let y = e.touches ? e.touches[0].clientY : e.clientY;
+  if(!dibujando) return;
 
-puntos.push({x,y});
+  let x = e.touches ? e.touches[0].clientX : e.clientX;
+  let y = e.touches ? e.touches[0].clientY : e.clientY;
+
+  puntos.push({x,y});
+
+  // reset si pasa 1 segundo sin moverse
+  clearTimeout(timeoutReset);
+  timeoutReset = setTimeout(resetear, 1000);
 }
 
+// terminar trazo
 function end(){
-if(validarR(puntos)){
-desbloquear();
-}
-}
+  dibujando = false;
 
-// detectar gesto tipo "R" (simplificado)
-function validarR(p){
-
-if(p.length < 40) return false;
-
-// calcular cambios de dirección
-let cambiosDireccion = 0;
-
-for(let i = 2; i < p.length; i++){
-  let dx1 = p[i-1].x - p[i-2].x;
-  let dy1 = p[i-1].y - p[i-2].y;
-  let dx2 = p[i].x - p[i-1].x;
-  let dy2 = p[i].y - p[i-1].y;
-
-  let cambio = Math.abs(dx1 - dx2) + Math.abs(dy1 - dy2);
-
-  if(cambio > 15){
-    cambiosDireccion++;
+  if(validarR(puntos)){
+    desbloquear();
+  } else {
+    resetear();
   }
 }
 
-// desplazamientos totales
-let inicio = p[0];
-let fin = p[p.length - 1];
-
-let desplazamientoY = fin.y - inicio.y;
-let desplazamientoX = fin.x - inicio.x;
-
-// condiciones más estrictas
-let baja = desplazamientoY > 100;      // tiene que bajar bastante
-let derecha = desplazamientoX > 50;    // tiene que ir hacia la derecha
-let forma = cambiosDireccion > 10;     // debe tener curva
-
-return baja && derecha && forma;
+// reset total
+function resetear(){
+  puntos = [];
 }
 
+// VALIDAR GESTO "R"
+function validarR(p){
+
+  if(p.length < 50) return false;
+
+  let tercio = Math.floor(p.length / 3);
+
+  let p1 = p.slice(0, tercio);
+  let p2 = p.slice(tercio, tercio*2);
+  let p3 = p.slice(tercio*2);
+
+  // 1️⃣ subida vertical
+  let subida = p1[0].y - p1[p1.length-1].y > 100;
+
+  // 2️⃣ curva derecha
+  let derecha = p2[p2.length-1].x - p2[0].x > 50;
+
+  // 3️⃣ bajada diagonal
+  let baja = p3[p3.length-1].y - p3[0].y > 80;
+  let diagonal = p3[p3.length-1].x - p3[0].x > 30;
+
+  return subida && derecha && baja && diagonal;
+}
+
+// desbloquear
 function desbloquear(){
-document.getElementById("canvas").style.display="none";
-document.getElementById("videoContainer").style.display="flex";
+  document.getElementById("canvas").style.display="none";
+  document.getElementById("videoContainer").style.display="flex";
 }
-const video = document.getElementById("video");
 
-video.onended = function(){
-  document.body.style.background = "black";
-  video.style.display = "none";
-};
 // eventos táctiles
 canvas.addEventListener("touchstart", start);
 canvas.addEventListener("touchmove", move);
 canvas.addEventListener("touchend", end);
 
-// mouse (PC)
+// eventos ratón (PC)
 canvas.addEventListener("mousedown", start);
 canvas.addEventListener("mousemove", move);
 canvas.addEventListener("mouseup", end);
+
+// ocultar video al terminar (solo una vez)
+const video = document.getElementById("video");
+
+video.onended = function(){
+  video.style.display = "none";
+  document.body.style.background = "black";
+};
 
 </script>
 
